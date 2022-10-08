@@ -1,0 +1,45 @@
+[project]
+name = "git-rebase-branches"
+description = "Rebase multiple branches at once"
+readme = "README.md"
+requires-python = ">= 3.7"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
+    "Programming Language :: Python :: 3.7",
+]
+dynamic = ["version"]
+dependencies = [
+    'importlib-metadata >= 1.4; python_version < "3.8"',
+]
+
+[[project.authors]]
+name = "David Tucker"
+email = "david@tucker.name"
+
+[project.license]
+file = "LICENSE.txt"
+
+[project.scripts]
+git-rebase-branches = "git_rebase_branches:main"
+
+[project.urls]
+homepage = "https://github.com/dmtucker/git-rebase-branches"
+
+[build-system]
+requires = ["setuptools ~= 65.4", "setuptools-scm ~= 7.0", "wheel ~= 0.37.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.bandit]
+skips = [
+    "B404",  # [B404:import_subprocess] This is a git script.
+    "B603",  # [B603:subprocess_without_shell_equals_true] This script wraps user input.
+    "B607",  # [B607:start_process_with_partial_path] Looking up git on $PATH is a feature.
+]
+
+# https://black.readthedocs.io/en/stable/guides/using_black_with_other_tools.html#pylint
+[tool.pylint.format]
+max-line-length = "88"
+
+[tool.setuptools_scm]
