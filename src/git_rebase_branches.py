@@ -101,7 +101,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     start = result.stdout.strip()
     if not start:
         result = subprocess.run(
-            ["git", "show-ref", "--hash", "HEAD"],
+            ["git", "rev-parse", "HEAD"],
             capture_output=True,
             check=True,
             encoding="utf-8",
