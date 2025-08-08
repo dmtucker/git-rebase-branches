@@ -71,7 +71,7 @@ def stash_changes() -> bool:
         encoding="utf-8",
     )
     stashed_changes = len(result.stdout.splitlines())
-    run(["git", "stash", "push"], check=True)
+    run(["git", "stash", "push", "--include-untracked"], check=True)
     result = subprocess.run(
         ["git", "stash", "list"],
         capture_output=True,
