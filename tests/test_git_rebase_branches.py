@@ -1,6 +1,5 @@
 """Test git_rebase_branches."""
 
-
 import pytest
 
 import git_rebase_branches

@@ -6,13 +6,10 @@
 
 import argparse
 
-try:
-    from importlib.metadata import version
-except ModuleNotFoundError:  # py37
-    from importlib_metadata import version
 import shlex
 import subprocess
 import sys
+from importlib.metadata import version
 from typing import Any, Dict, List, Optional
 
 
