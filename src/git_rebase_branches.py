@@ -9,8 +9,9 @@ import argparse
 import shlex
 import subprocess
 import sys
+from contextlib import contextmanager
 from importlib.metadata import version
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 
 FAILURE_STATUS = "failed"
@@ -101,6 +102,18 @@ def current_ref() -> str:
     return ref
 
 
+@contextmanager
+def original_state_preserved() -> Iterator[Tuple[bool, str]]:
+    """Stash any local changes and note the current ref, then restore both."""
+    stashed_changes = stash_changes()
+    og_ref = current_ref()
+    yield stashed_changes, og_ref
+    # Return to the original state.
+    run(["git", "-c", "advice.detachedHead=false", "checkout", og_ref], check=True)
+    if stashed_changes:
+        run(["git", "stash", "pop"], check=True)
+
+
 def main(argv: Optional[List[str]] = None) -> None:
     """Execute CLI commands."""
     if argv is None:
@@ -108,12 +121,6 @@ def main(argv: Optional[List[str]] = None) -> None:
     args = cli().parse_args(argv)
     if args.branches is None:
         args.branches = branches_that_do_not_contain(args.base_ref)
-
-    # Stash any changes.
-    stashed_changes = stash_changes()
-
-    # Note where we are so we can come back.
-    start = current_ref()
 
     # Rebase each branch.
     statuses: Dict[str, str] = {}
@@ -129,27 +136,18 @@ def main(argv: Optional[List[str]] = None) -> None:
                 failures += 1
             print("-", branch, f"({status})")
 
-        if stashed_changes:
-            print()
-            run(["git", "stash", "list", "-n1"], check=True)
-
         return failures
 
-    for branch in args.branches:
-        run(["git", "switch", branch], check=True)
-        try:
-            run(["git", "rebase", args.base_ref], check=True)
-        except subprocess.CalledProcessError:
-            statuses[branch] = FAILURE_STATUS
-            run(["git", "rebase", "--abort"], check=True)
-        else:
-            statuses[branch] = "succeeded"
-
-    # Return to the original state.
-    run(["git", "-c", "advice.detachedHead=false", "checkout", start], check=True)
-    if stashed_changes:
-        run(["git", "stash", "pop"], check=True)
-        stashed_changes = False
+    with original_state_preserved():
+        for branch in args.branches:
+            run(["git", "switch", branch], check=True)
+            try:
+                run(["git", "rebase", args.base_ref], check=True)
+            except subprocess.CalledProcessError:
+                statuses[branch] = FAILURE_STATUS
+                run(["git", "rebase", "--abort"], check=True)
+            else:
+                statuses[branch] = "succeeded"
 
     # Report what happened.
     failures = print_report()
