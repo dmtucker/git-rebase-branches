@@ -114,12 +114,21 @@ def current_ref() -> str:
 
 
 @contextmanager
+def original_ref_preserved() -> Iterator[str]:
+    """Note the current ref, then restore it."""
+    og_ref = current_ref()
+    try:
+        yield og_ref
+    finally:
+        run(["git", "-c", "advice.detachedHead=false", "checkout", og_ref], check=True)
+
+
+@contextmanager
 def original_state_preserved() -> Iterator[Tuple[bool, str]]:
     """Stash any local changes and note the current ref, then restore both."""
     with changes_stashed() as stashed_changes:
-        og_ref = current_ref()
-        yield stashed_changes, og_ref
-        run(["git", "-c", "advice.detachedHead=false", "checkout", og_ref], check=True)
+        with original_ref_preserved() as og_ref:
+            yield stashed_changes, og_ref
 
 
 def main(argv: Optional[List[str]] = None) -> None:
