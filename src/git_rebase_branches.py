@@ -157,9 +157,8 @@ def main(argv: Optional[List[str]] = None) -> None:
 
     with original_state_preserved():
         for branch in args.branches:
-            run(["git", "switch", branch], check=True)
             try:
-                run(["git", "rebase", args.base_ref], check=True)
+                run(["git", "rebase", args.base_ref, branch], check=True)
             except subprocess.CalledProcessError:
                 statuses[branch] = FAILURE_STATUS
                 run(["git", "rebase", "--abort"], check=True)
