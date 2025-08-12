@@ -139,22 +139,9 @@ def main(argv: Optional[List[str]] = None) -> None:
     if args.branches is None:
         args.branches = branches_that_do_not_contain(args.base_ref)
 
-    # Rebase each branch.
     statuses: Dict[str, str] = {}
 
-    def print_report() -> int:
-        failures = 0
-        for i, branch in enumerate(sorted(args.branches)):
-            if i == 0:
-                print()
-                print("=" * 36, "SUMMARY", "=" * 36)
-            status = statuses.get(branch, "not attempted")
-            if status == FAILURE_STATUS:
-                failures += 1
-            print("-", branch, f"({status})")
-
-        return failures
-
+    # Rebase each branch.
     with original_state_preserved():
         for branch in args.branches:
             try:
@@ -166,8 +153,13 @@ def main(argv: Optional[List[str]] = None) -> None:
                 statuses[branch] = "succeeded"
 
     # Report what happened.
-    failures = print_report()
-    sys.exit(failures)
+    for i, branch in enumerate(args.branches):
+        if i == 0:
+            print()
+            print("=" * 36, "SUMMARY", "=" * 36)
+        print("-", branch, f"({statuses[branch]})")
+
+    sys.exit(FAILURE_STATUS in statuses.values())
 
 
 def run(command: List[str], **kwargs: Any) -> "subprocess.CompletedProcess[str]":
