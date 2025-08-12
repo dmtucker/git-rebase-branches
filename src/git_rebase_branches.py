@@ -49,6 +49,18 @@ def cli(parser: Optional[argparse.ArgumentParser] = None) -> argparse.ArgumentPa
     return parser
 
 
+def branches_that_do_not_contain(ref: str, /) -> List[str]:
+    """Get a list of branches that do not contain a given ref."""
+    result = run(
+        ["git", "branch", "--no-contains", ref, "--format=%(refname:short)"],
+        capture_output=True,
+        check=True,
+        encoding="utf-8",
+    )
+    print(result.stdout, end="", flush=True)
+    return result.stdout.splitlines()
+
+
 def stash_changes() -> bool:
     """Stash any local changes, and return whether changes were stashed."""
     result = subprocess.run(
@@ -94,28 +106,14 @@ def main(argv: Optional[List[str]] = None) -> None:
     if argv is None:
         argv = sys.argv[1:]
     args = cli().parse_args(argv)
+    if args.branches is None:
+        args.branches = branches_that_do_not_contain(args.base_ref)
 
     # Stash any changes.
     stashed_changes = stash_changes()
 
     # Note where we are so we can come back.
     start = current_ref()
-
-    # Get all the branches that need rebasing.
-    if args.branches is None:
-        # Check out to the ref to ensure it won't show up in the next command.
-        run(
-            ["git", "-c", "advice.detachedHead=false", "checkout", args.base_ref],
-            check=True,
-        )
-        result = run(
-            ["git", "branch", "--no-contains", "HEAD", "--format=%(refname:short)"],
-            capture_output=True,
-            check=True,
-            encoding="utf-8",
-        )
-        print(result.stdout, end="", flush=True)
-        args.branches = result.stdout.splitlines()
 
     # Rebase each branch.
     statuses: Dict[str, str] = {}
