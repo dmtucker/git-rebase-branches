@@ -92,6 +92,17 @@ def changes_stashed() -> Iterator[bool]:
             run(["git", "stash", "pop"], check=True)
 
 
+def ref_commit(ref: str, /) -> str:
+    """Get the commit for a given ref."""
+    result = subprocess.run(
+        ["git", "rev-parse", ref],
+        capture_output=True,
+        check=True,
+        encoding="utf-8",
+    )
+    return result.stdout.strip()
+
+
 def current_ref() -> str:
     """Get the current Git branch, commit, etc."""
     run(["git", "log", "-n1"], check=True)
@@ -101,16 +112,7 @@ def current_ref() -> str:
         check=True,
         encoding="utf-8",
     )
-    ref = result.stdout.strip()
-    if not ref:
-        result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True,
-            check=True,
-            encoding="utf-8",
-        )
-        ref = result.stdout.strip()
-    return ref
+    return result.stdout.strip() or ref_commit("HEAD")
 
 
 @contextmanager
