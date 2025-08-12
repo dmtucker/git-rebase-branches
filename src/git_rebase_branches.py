@@ -165,7 +165,7 @@ def main(argv: Optional[list[str]] = None) -> None:
 def run(command: list[str], **kwargs: Any) -> "subprocess.CompletedProcess[str]":
     """Print a command before running it."""
     print("$", shlex.join(str(token) for token in command), flush=True)
-    return subprocess.run(command, **kwargs)
+    return subprocess.run(command, check=kwargs.pop("check", True), **kwargs)
 
 
 if __name__ == "__main__":
