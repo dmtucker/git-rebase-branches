@@ -49,13 +49,8 @@ def cli(parser: Optional[argparse.ArgumentParser] = None) -> argparse.ArgumentPa
     return parser
 
 
-def main(argv: Optional[List[str]] = None) -> None:
-    """Execute CLI commands."""
-    if argv is None:
-        argv = sys.argv[1:]
-    args = cli().parse_args(argv)
-
-    # Stash any changes.
+def stash_changes() -> bool:
+    """Stash any local changes, and return whether changes were stashed."""
     result = subprocess.run(
         ["git", "stash", "list"],
         capture_output=True,
@@ -70,7 +65,17 @@ def main(argv: Optional[List[str]] = None) -> None:
         check=True,
         encoding="utf-8",
     )
-    stashed_changes = len(result.stdout.splitlines()) - stashed_changes
+    return bool(len(result.stdout.splitlines()) - stashed_changes)
+
+
+def main(argv: Optional[List[str]] = None) -> None:
+    """Execute CLI commands."""
+    if argv is None:
+        argv = sys.argv[1:]
+    args = cli().parse_args(argv)
+
+    # Stash any changes.
+    stashed_changes = stash_changes()
 
     # Note where we are so we can come back.
     result = subprocess.run(
@@ -122,7 +127,7 @@ def main(argv: Optional[List[str]] = None) -> None:
 
         if stashed_changes:
             print()
-            run(["git", "stash", "list", f"-n{stashed_changes}"], check=True)
+            run(["git", "stash", "list", "-n1"], check=True)
 
         return failures
 
@@ -140,7 +145,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     run(["git", "-c", "advice.detachedHead=false", "checkout", start], check=True)
     if stashed_changes:
         run(["git", "stash", "pop"], check=True)
-        stashed_changes -= 1
+        stashed_changes = False
 
     # Report what happened.
     failures = print_report()
