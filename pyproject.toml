@@ -2,11 +2,11 @@
 name = "git-rebase-branches"
 description = "Rebase multiple branches at once"
 readme = "README.md"
+license = "LGPL-2.0-or-later"
 requires-python = ">= 3.9"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
 ]
 dynamic = ["version"]
 dependencies = [
@@ -15,9 +15,6 @@ dependencies = [
 [[project.authors]]
 name = "David Tucker"
 email = "david@tucker.name"
-
-[project.license]
-file = "LICENSE.txt"
 
 [project.scripts]
 git-rebase-branches = "git_rebase_branches:main"
