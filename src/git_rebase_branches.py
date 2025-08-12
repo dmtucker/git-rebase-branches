@@ -68,6 +68,27 @@ def stash_changes() -> bool:
     return bool(len(result.stdout.splitlines()) - stashed_changes)
 
 
+def current_ref() -> str:
+    """Get the current Git branch, commit, etc."""
+    run(["git", "log", "-n1"], check=True)
+    result = subprocess.run(
+        ["git", "branch", "--show-current"],
+        capture_output=True,
+        check=True,
+        encoding="utf-8",
+    )
+    ref = result.stdout.strip()
+    if not ref:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            check=True,
+            encoding="utf-8",
+        )
+        ref = result.stdout.strip()
+    return ref
+
+
 def main(argv: Optional[List[str]] = None) -> None:
     """Execute CLI commands."""
     if argv is None:
@@ -78,22 +99,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     stashed_changes = stash_changes()
 
     # Note where we are so we can come back.
-    result = subprocess.run(
-        ["git", "branch", "--show-current"],
-        capture_output=True,
-        check=True,
-        encoding="utf-8",
-    )
-    start = result.stdout.strip()
-    if not start:
-        result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            capture_output=True,
-            check=True,
-            encoding="utf-8",
-        )
-        start = result.stdout.strip()
-    run(["git", "log", "-n1"], check=True)
+    start = current_ref()
 
     # Get all the branches that need rebasing.
     if args.branches is None:
