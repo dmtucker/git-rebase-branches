@@ -11,7 +11,7 @@ import subprocess
 import sys
 from contextlib import contextmanager
 from importlib.metadata import version
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Iterator, Optional
 
 
 FAILURE_STATUS = "failed"
@@ -50,7 +50,7 @@ def cli(parser: Optional[argparse.ArgumentParser] = None) -> argparse.ArgumentPa
     return parser
 
 
-def branches_that_do_not_contain(ref: str, /) -> List[str]:
+def branches_that_do_not_contain(ref: str, /) -> list[str]:
     """Get a list of branches that do not contain a given ref."""
     result = run(
         ["git", "branch", "--no-contains", ref, "--format=%(refname:short)"],
@@ -124,14 +124,14 @@ def original_ref_preserved() -> Iterator[str]:
 
 
 @contextmanager
-def original_state_preserved() -> Iterator[Tuple[bool, str]]:
+def original_state_preserved() -> Iterator[tuple[bool, str]]:
     """Stash any local changes and note the current ref, then restore both."""
     with changes_stashed() as stashed_changes:
         with original_ref_preserved() as og_ref:
             yield stashed_changes, og_ref
 
 
-def main(argv: Optional[List[str]] = None) -> None:
+def main(argv: Optional[list[str]] = None) -> None:
     """Execute CLI commands."""
     if argv is None:
         argv = sys.argv[1:]
@@ -139,7 +139,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     if args.branches is None:
         args.branches = branches_that_do_not_contain(args.base_ref)
 
-    statuses: Dict[str, str] = {}
+    statuses: dict[str, str] = {}
 
     # Rebase each branch.
     with original_state_preserved():
@@ -162,7 +162,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     sys.exit(FAILURE_STATUS in statuses.values())
 
 
-def run(command: List[str], **kwargs: Any) -> "subprocess.CompletedProcess[str]":
+def run(command: list[str], **kwargs: Any) -> "subprocess.CompletedProcess[str]":
     """Print a command before running it."""
     print("$", shlex.join(str(token) for token in command), flush=True)
     return subprocess.run(command, **kwargs)
