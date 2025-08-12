@@ -81,6 +81,17 @@ def stash_changes() -> bool:
     return bool(len(result.stdout.splitlines()) - stashed_changes)
 
 
+@contextmanager
+def changes_stashed() -> Iterator[bool]:
+    """Stash any local changes, then un-stash them."""
+    stashed_changes = stash_changes()
+    try:
+        yield stashed_changes
+    finally:
+        if stashed_changes:
+            run(["git", "stash", "pop"], check=True)
+
+
 def current_ref() -> str:
     """Get the current Git branch, commit, etc."""
     run(["git", "log", "-n1"], check=True)
@@ -105,13 +116,10 @@ def current_ref() -> str:
 @contextmanager
 def original_state_preserved() -> Iterator[Tuple[bool, str]]:
     """Stash any local changes and note the current ref, then restore both."""
-    stashed_changes = stash_changes()
-    og_ref = current_ref()
-    yield stashed_changes, og_ref
-    # Return to the original state.
-    run(["git", "-c", "advice.detachedHead=false", "checkout", og_ref], check=True)
-    if stashed_changes:
-        run(["git", "stash", "pop"], check=True)
+    with changes_stashed() as stashed_changes:
+        og_ref = current_ref()
+        yield stashed_changes, og_ref
+        run(["git", "-c", "advice.detachedHead=false", "checkout", og_ref], check=True)
 
 
 def main(argv: Optional[List[str]] = None) -> None:
