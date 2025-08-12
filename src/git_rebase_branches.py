@@ -41,12 +41,6 @@ def cli(parser: Optional[argparse.ArgumentParser] = None) -> argparse.ArgumentPa
         help="the branches to rebase",
     )
     parser.add_argument(
-        "-i",
-        "--interactive",
-        action="store_true",
-        help="exit instead of aborting a failed rebase",
-    )
-    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {version(__name__)}",
@@ -62,19 +56,6 @@ def main(argv: Optional[List[str]] = None) -> None:
     args = cli().parse_args(argv)
 
     # Stash any changes.
-    if (
-        args.interactive
-        and run(["git", "diff-index", "--exit-code", "HEAD", "--"]).returncode
-    ):
-        try:
-            input(
-                "\n"
-                "There are local changes that need to be stashed or committed.\n"
-                "Press ^C to stop here or Enter to stash them and continue.\n"
-            )
-        except KeyboardInterrupt:
-            print()
-            sys.exit(1)
     result = subprocess.run(
         ["git", "stash", "list"],
         capture_output=True,
@@ -151,14 +132,6 @@ def main(argv: Optional[List[str]] = None) -> None:
             run(["git", "rebase", args.base_ref], check=True)
         except subprocess.CalledProcessError:
             statuses[branch] = FAILURE_STATUS
-            if args.interactive:
-                try:
-                    input("\nPress ^C to stop here or Enter to continue.\n")
-                except KeyboardInterrupt:
-                    print()
-                    failures = print_report()
-                    run(["git", "status"], check=True)
-                    sys.exit(failures)
             run(["git", "rebase", "--abort"], check=True)
         else:
             statuses[branch] = "succeeded"
