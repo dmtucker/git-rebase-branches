@@ -34,7 +34,8 @@ def branch_commit():
     }
 
 
-def test_git_rebase_branches(tmp_path, monkeypatch):
+@pytest.mark.parametrize("detached", [False, True])
+def test_git_rebase_branches(tmp_path, monkeypatch, detached):
     """Test a basic example."""
     base_ref = "main"
     branch_no_contains = "init"
@@ -42,7 +43,7 @@ def test_git_rebase_branches(tmp_path, monkeypatch):
 
     monkeypatch.chdir(tmp_path)
     commit_opts = ["--allow-empty"]
-    for git_command in [
+    commands = [
         ["init", "-b", base_ref],
         ["config", "commit.gpgsign", "false"],
         ["config", "user.name", "Coder Joe"],
@@ -51,14 +52,17 @@ def test_git_rebase_branches(tmp_path, monkeypatch):
         ["branch", branch_no_contains],
         ["commit"] + commit_opts + ["-m", "New Commit on main"],
         ["branch", branch_contains],
-    ]:
+    ]
+    if detached:
+        commands.append(["switch", "-d", branch_no_contains])
+    for git_command in commands:
         subprocess.run(["git"] + git_command, check=True)
 
-    head = git_rebase_branches.ref_commit("HEAD")
+    commit = git_rebase_branches.ref_commit(base_ref)
     target_state = {
-        base_ref: head,
-        branch_no_contains: head,
-        branch_contains: head,
+        base_ref: commit,
+        branch_no_contains: commit,
+        branch_contains: commit,
     }
     assert branch_commit() != target_state
 
