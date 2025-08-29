@@ -53,7 +53,14 @@ def cli(parser: Optional[argparse.ArgumentParser] = None) -> argparse.ArgumentPa
 def branches_that_do_not_contain(ref: str, /) -> list[str]:
     """Get a list of branches that do not contain a given ref."""
     result = run(
-        ["git", "branch", "--no-contains", ref, "--format=%(refname:short)"],
+        [
+            "git",
+            "for-each-ref",
+            "--no-contains",
+            ref,
+            "--format=%(refname:short)",
+            "refs/heads/",
+        ],
         capture_output=True,
         check=True,
         encoding="utf-8",
