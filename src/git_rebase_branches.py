@@ -147,6 +147,8 @@ def main(argv: Optional[list[str]] = None) -> None:
     args = cli().parse_args(argv)
     if args.branches is None:
         args.branches = branches_that_do_not_contain(args.base_ref)
+    if not args.branches:
+        sys.exit(0)
 
     statuses: dict[str, str] = {}
 
